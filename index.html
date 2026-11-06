@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CV Tennis × Backspin — Clickable Prototype</title>
+<style>
+:root{
+  --ink:#171717;--muted:#777;--paper:#f7f5f1;--card:#fff;--line:#e8e4dc;
+  --accent:#a12b2b;--accent2:#7d1f22;--soft:#f0e5df;--green:#2f7d5b;
+  --shadow:0 12px 35px rgba(25,20,15,.09);--r:22px;
+}
+*{box-sizing:border-box} body{margin:0;background:#e9e5de;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+button{font:inherit;border:0;cursor:pointer} .app{min-height:100vh;display:flex;justify-content:center}
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--paper);position:relative;overflow:hidden;box-shadow:0 0 50px rgba(0,0,0,.12)}
+@media(min-width:700px){.phone{min-height:860px;margin:24px 0;border-radius:32px;box-shadow:0 24px 70px rgba(0,0,0,.2)}}
+.top{padding:22px 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:900;letter-spacing:-.8px;font-size:22px}.brand span{color:var(--accent)}
+.avatar{width:38px;height:38px;border-radius:50%;background:#222;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}
+main{padding:8px 20px 100px}.view{display:none}.view.active{display:block}
+.eyebrow{font-size:12px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:1.2px}
+h1{font-size:32px;line-height:1.02;margin:8px 0 10px;letter-spacing:-1.4px} h2{font-size:22px;margin:0 0 14px;letter-spacing:-.5px}
+p{color:var(--muted);line-height:1.55}.hero{background:#1d1d1b;color:#fff;border-radius:28px;padding:25px;margin:8px 0 20px;min-height:245px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:220px;height:220px;border:2px solid rgba(255,255,255,.18);border-radius:50%;right:-65px;bottom:-90px}
+.hero p{color:#d6d3ce;max-width:260px}.hero .cta{margin-top:18px}
+.cta,.primary{background:var(--accent);color:#fff;border-radius:14px;padding:14px 18px;font-weight:800;width:100%}.secondary{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px 16px;font-weight:750}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:0 5px 20px rgba(0,0,0,.025)}
+.mini{font-size:12px;color:var(--muted)}.value{font-size:24px;font-weight:900;margin-top:4px}
+.section{margin-top:24px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.link{background:none;color:var(--accent);font-weight:800;padding:0}.dates{display:flex;gap:9px;overflow:auto;padding-bottom:4px}.date{min-width:64px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 8px;text-align:center}.date strong{display:block;font-size:16px}.date small{color:var(--muted)}.date.sel{background:var(--ink);color:#fff;border-color:var(--ink)}.date.sel small{color:#ddd}
+.courts{display:grid;gap:12px}.court{display:flex;gap:13px;align-items:center}.courtpic{width:88px;height:78px;border-radius:16px;background:linear-gradient(145deg,#263b32,#8c9c76);position:relative;overflow:hidden}.courtpic:after{content:"";position:absolute;inset:12px;border:1px solid rgba(255,255,255,.7)}.court h3{margin:0 0 5px}.court .tag{font-size:11px;background:#eeeae2;border-radius:8px;padding:4px 7px}.selected{outline:2px solid var(--accent)}
+.times{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.time{padding:12px 5px;background:#fff;border:1px solid var(--line);border-radius:12px;text-align:center;font-weight:750}.time.off{color:#bbb;background:#f1efeb;text-decoration:line-through}.time.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.summary{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px}.summary .line{display:flex;justify-content:space-between;padding:8px 0}.total{font-size:23px;font-weight:900;border-top:1px solid var(--line);padding-top:13px;margin-top:6px}
+.sticky{position:fixed;bottom:0;width:min(100%,430px);background:rgba(247,245,241,.94);backdrop-filter:blur(14px);padding:12px 20px;border-top:1px solid var(--line);z-index:5}
+.nav{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.nav button{background:none;color:#888;padding:5px 2px;font-size:11px;font-weight:700}.nav button b{display:block;font-size:18px;margin-bottom:2px}.nav button.active{color:var(--accent)}
+.back{background:none;font-size:25px;padding:0;margin:0 0 12px}.pill{display:inline-flex;padding:6px 9px;border-radius:999px;background:var(--soft);color:var(--accent);font-size:11px;font-weight:800}
+.notice{padding:13px 14px;border-radius:15px;background:#edf6f0;color:#286347;font-size:13px;font-weight:700}.productgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.prodimg{height:145px;border-radius:18px;background:#e8e2d8;display:grid;place-items:center;font-size:48px}.price{font-weight:900;margin-top:7px}.cartbadge{position:relative}.badge{position:absolute;top:-5px;right:12px;background:var(--accent);color:#fff;border-radius:99px;min-width:17px;height:17px;font-size:10px;display:grid;place-items:center}
+.option{display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);background:#fff;border-radius:15px;margin-bottom:9px}.radio{width:18px;height:18px;border:2px solid #bbb;border-radius:50%}.option.sel .radio{border:5px solid var(--accent)}
+.toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);background:#222;color:#fff;padding:11px 15px;border-radius:12px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:20}.toast.show{opacity:1}
+.smallgap{margin-top:10px}.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app"><div class="phone">
+  <div class="top"><div class="brand">CV <span>TENNIS</span></div><button class="avatar" onclick="go('profile')">PL</button></div>
+  <main>
+
+    <section id="home" class="view active">
+      <div class="hero">
+        <div class="eyebrow" style="color:#d98b8b">CV Tennis Club</div>
+        <h1>Play better.<br>Feel better.</h1>
+        <p>จองสนามง่าย ดูเวลาว่างแบบ real-time และจัดการทุกอย่างได้ในที่เดียว</p>
+        <button class="cta" onclick="go('booking')">Book a Court →</button>
+      </div>
+      <div class="section"><div class="row"><h2>Next booking</h2><button class="link" onclick="go('bookings')">ดูทั้งหมด</button></div>
+        <div class="card"><div class="row"><div><span class="pill">CONFIRMED</span><h3 style="margin:10px 0 3px">Court 02 · Outdoor</h3><div class="mini">เสาร์ 14 พ.ย. · 19:00–20:00</div></div><div style="font-size:28px">🎾</div></div></div>
+      </div>
+      <div class="section"><div class="row"><h2>Quick access</h2></div><div class="grid2">
+        <button class="card" onclick="go('booking')" style="text-align:left"><div style="font-size:25px">🗓️</div><b>Book a court</b><div class="mini">เช็กเวลาว่าง</div></button>
+        <button class="card" onclick="go('shop')" style="text-align:left"><div style="font-size:25px">🛍️</div><b>Shop</b><div class="mini">Gear & accessories</div></button>
+        <button class="card" onclick="go('coaching')" style="text-align:left"><div style="font-size:25px">🏸</div><b>Coaching</b><div class="mini">Private & group lessons</div></button>
+        <button class="card" onclick="go('events')" style="text-align:left"><div style="font-size:25px">🏆</div><b>Club Events</b><div class="mini">Join the tennis community</div></button>
+      </div></div>
+    </section>
+
+    <section id="booking" class="view">
+      <button class="back" onclick="go('home')">‹</button>
+      <div class="eyebrow">BOOK A COURT</div><h1>เลือกวันและเวลา</h1><p>สนามที่ว่างจะแสดงแบบ real-time</p>
+      <div class="section"><h2>วันที่</h2><div class="dates" id="dates"></div></div>
+      <div class="section"><h2>สนาม</h2><div class="courts" id="courts"></div></div>
+      <div class="section"><div class="row"><h2>เวลา</h2><span class="mini">1 hour / session</span></div><div class="times" id="times"></div></div>
+      <div class="section"><button class="primary" onclick="continueBooking()">Continue →</button></div>
+    </section>
+
+    <section id="summary" class="view">
+      <button class="back" onclick="go('booking')">‹</button><div class="eyebrow">BOOKING SUMMARY</div><h1>เกือบเรียบร้อยแล้ว</h1>
+      <div class="summary">
+        <div class="line"><span>สนาม</span><b id="sumCourt"></b></div><div class="line"><span>วันที่</span><b id="sumDate"></b></div><div class="line"><span>เวลา</span><b id="sumTime"></b></div><div class="line"><span>ระยะเวลา</span><b>60 นาที</b></div>
+        <div class="total row"><span>ยอดรวม</span><span>฿450</span></div>
+      </div>
+      <div class="section"><h2>Payment</h2><div class="option sel"><div class="radio"></div><div><b>PromptPay</b><div class="mini">ชำระผ่าน QR Code</div></div></div><div class="option"><div class="radio"></div><div><b>Credit / Debit Card</b><div class="mini">Visa / Mastercard</div></div></div></div>
+      <div class="section"><div class="notice">✓ ยกเลิกฟรีภายใน 2 ชั่วโมงก่อนเวลาเล่น</div></div>
+      <div class="section"><button class="primary" onclick="confirmBooking()">Pay ฿450 & Confirm</button></div>
+    </section>
+
+    <section id="confirmed" class="view">
+      <div style="text-align:center;padding:35px 5px 10px"><div style="font-size:62px">✓</div><div class="eyebrow">BOOKING CONFIRMED</div><h1>เจอกันที่สนาม!</h1><p>การจองของคุณได้รับการยืนยันแล้ว</p></div>
+      <div class="summary"><div class="line"><span>สนาม</span><b id="confCourt"></b></div><div class="line"><span>วัน / เวลา</span><b id="confDateTime"></b></div><div class="line"><span>Booking ID</span><b id="confId"></b></div></div>
+      <div class="section"><button class="primary" onclick="go('bookings')">View My Bookings</button></div><div class="section"><button class="secondary" style="width:100%" onclick="go('home')">Back to Home</button></div>
+    </section>
+
+    <section id="bookings" class="view">
+      <div class="eyebrow">MY BOOKINGS</div><h1>การจองของฉัน</h1>
+      <div id="bookingList"></div>
+    </section>
+
+
+    <section id="coaching" class="view">
+      <button class="back" onclick="go('home')">‹</button>
+      <div class="eyebrow">COACHING</div><h1>พัฒนาเกมของคุณ</h1>
+      <p>เลือกคลาสที่เหมาะกับระดับและเป้าหมายของคุณ</p>
+      <div class="section">
+        <div class="card">
+          <div class="row"><span class="pill">POPULAR</span><span class="mini">60 min</span></div>
+          <h2 style="margin-top:12px">Private Coaching</h2>
+          <p>เรียนตัวต่อตัวกับโค้ช เน้นแก้จุดอ่อนและวางแผนการเล่นเฉพาะบุคคล</p>
+          <div class="row"><b>฿1,200 / session</b><button class="secondary" onclick="selectCoaching('Private Coaching','฿1,200')">ดูรอบ</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="card">
+          <div class="row"><span class="pill">2–4 PLAYERS</span><span class="mini">90 min</span></div>
+          <h2 style="margin-top:12px">Small Group Clinic</h2>
+          <p>คลาสกลุ่มเล็ก ฝึก footwork, consistency และ tactical play ไปพร้อมเพื่อน</p>
+          <div class="row"><b>฿650 / person</b><button class="secondary" onclick="selectCoaching('Small Group Clinic','฿650')">ดูรอบ</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <h2>Upcoming sessions</h2>
+        <div class="card">
+          <div class="row"><div><b>Saturday Tennis Clinic</b><div class="mini">เสาร์ 14 พ.ย. · 10:00</div></div><span class="pill">6 SPOTS</span></div>
+          <button class="primary smallgap" onclick="toast('เลือกคลาสแล้ว ✓')">Reserve spot</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="coachingDetail" class="view">
+      <button class="back" onclick="go('coaching')">‹</button>
+      <div class="eyebrow">COACHING SESSION</div><h1 id="coachTitle">Private Coaching</h1>
+      <p>เลือกวันที่และช่วงเวลาที่ต้องการเรียน</p>
+      <div class="section"><h2>เลือกวัน</h2><div class="dates">
+        <button class="date sel"><small>SAT</small><strong>14</strong></button>
+        <button class="date"><small>SUN</small><strong>15</strong></button>
+        <button class="date"><small>MON</small><strong>16</strong></button>
+      </div></div>
+      <div class="section"><h2>Available slots</h2><div class="times">
+        <button class="time" onclick="this.classList.toggle('sel')">09:00</button>
+        <button class="time" onclick="this.classList.toggle('sel')">10:30</button>
+        <button class="time" onclick="this.classList.toggle('sel')">17:00</button>
+        <button class="time" onclick="this.classList.toggle('sel')">18:30</button>
+      </div></div>
+      <div class="section"><div class="summary"><div class="line"><span>Session</span><b id="coachPrice">฿1,200</b></div><div class="line"><span>Coach</span><b>CV Tennis Coach</b></div></div></div>
+      <div class="section"><button class="primary" onclick="toast('Coaching session reserved ✓');go('home')">Reserve & Pay</button></div>
+    </section>
+
+    <section id="events" class="view">
+      <button class="back" onclick="go('home')">‹</button>
+      <div class="eyebrow">CLUB EVENTS</div><h1>มาเล่นด้วยกัน</h1>
+      <p>กิจกรรมสำหรับทุก level — แข่ง เล่น พบเพื่อน และสร้าง community</p>
+      <div class="section">
+        <div class="card">
+          <div class="row"><span class="pill">OPEN FOR ALL</span><b>🏆</b></div>
+          <h2 style="margin-top:12px">CV Weekend Social</h2>
+          <p>ตีแบบสนุก ๆ สลับคู่ทุกเกม เหมาะสำหรับคนที่อยากรู้จักเพื่อนใหม่ใน club</p>
+          <div class="mini">เสาร์ 21 พ.ย. · 17:00–20:00</div>
+          <div class="row smallgap"><b>฿350 / person</b><button class="primary" style="width:auto" onclick="joinEvent('CV Weekend Social')">Join Event</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="card">
+          <div class="row"><span class="pill">INTERMEDIATE+</span><b>⚡</b></div>
+          <h2 style="margin-top:12px">Friday Night Match</h2>
+          <p>แมตช์แบบ friendly competition พร้อมจัดสายและเก็บผลการแข่งขัน</p>
+          <div class="mini">ศุกร์ 27 พ.ย. · 19:00–22:00</div>
+          <div class="row smallgap"><b>฿450 / person</b><button class="primary" style="width:auto" onclick="joinEvent('Friday Night Match')">Join Event</button></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="card">
+          <div class="row"><span class="pill">COMMUNITY</span><b>☕</b></div>
+          <h2 style="margin-top:12px">Tennis & Coffee</h2>
+          <p>ตีเบา ๆ ตอนเช้า แล้วนั่ง coffee talk หลังเล่นจบ</p>
+          <div class="mini">อาทิตย์ 29 พ.ย. · 08:00–11:00</div>
+          <div class="row smallgap"><b>฿250 / person</b><button class="primary" style="width:auto" onclick="joinEvent('Tennis & Coffee')">Join Event</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="shop" class="view">
+      <div class="eyebrow">CV TENNIS SHOP</div><h1>Gear ที่พร้อมให้คุณเล่น</h1><p>เลือกอุปกรณ์ที่เข้ากับเกมของคุณ</p>
+      <div class="productgrid" id="products"></div>
+    </section>
+
+    <section id="product" class="view">
+      <button class="back" onclick="go('shop')">‹</button><div class="prodimg" id="detailImg">🎾</div>
+      <div class="eyebrow smallgap">CV TENNIS SHOP</div><h1 id="detailName"></h1><p id="detailDesc"></p><div class="value" id="detailPrice"></div>
+      <div class="section"><button class="primary" onclick="addCart()">Add to Cart</button></div>
+    </section>
+
+    <section id="cart" class="view">
+      <button class="back" onclick="go('shop')">‹</button><div class="eyebrow">YOUR CART</div><h1>ตะกร้าของคุณ</h1><div id="cartBody"></div>
+    </section>
+
+    <section id="checkout" class="view">
+      <button class="back" onclick="go('cart')">‹</button><div class="eyebrow">CHECKOUT</div><h1>ตรวจสอบคำสั่งซื้อ</h1>
+      <div class="summary"><div class="line"><span>สินค้า</span><b id="checkoutItem"></b></div><div class="line"><span>จัดส่ง</span><b>฿60</b></div><div class="total row"><span>รวม</span><span id="checkoutTotal"></span></div></div>
+      <div class="section"><h2>ชำระเงิน</h2><div class="option sel"><div class="radio"></div><b>PromptPay</b></div><div class="option"><div class="radio"></div><b>Credit / Debit Card</b></div></div>
+      <div class="section"><button class="primary" onclick="orderDone()">Place Order</button></div>
+    </section>
+
+    <section id="profile" class="view">
+      <div class="eyebrow">PROFILE</div><h1>สวัสดี, Paphawee</h1><p>จัดการข้อมูลบัญชีและการตั้งค่าของคุณ</p>
+      <div class="section card"><div class="row"><div><b>Paphawee L.</b><div class="mini">+66 8X XXX XXXX</div></div><div class="avatar">PL</div></div></div>
+      <div class="section"><div class="card"><div class="line row"><b>Personal information</b><span>›</span></div><div class="line row"><b>Notifications</b><span>›</span></div><div class="line row"><b>Payment methods</b><span>›</span></div><div class="line row"><b>Help & support</b><span>›</span></div></div></div>
+      <div class="section grid2">
+        <button class="card" onclick="go('coaching')" style="text-align:left"><div style="font-size:23px">🏸</div><b>Coaching</b><div class="mini">My lessons</div></button>
+        <button class="card" onclick="go('events')" style="text-align:left"><div style="font-size:23px">🏆</div><b>Club Events</b><div class="mini">My events</div></button>
+      </div>
+    </section>
+  </main>
+
+  <div class="sticky"><div class="nav">
+    <button id="n-home" onclick="go('home')"><b>⌂</b>Home</button>
+    <button id="n-bookings" onclick="go('bookings')"><b>◷</b>Bookings</button>
+    <button id="n-shop" class="cartbadge" onclick="go('shop')"><b>□</b>Shop<span class="badge" id="cartCount">0</span></button>
+    <button id="n-profile" onclick="go('profile')"><b>○</b>Profile</button>
+  </div></div>
+  <div class="toast" id="toast"></div>
+</div></div>
+
+<script>
+const state={date:1,court:1,time:'19:00',product:null,cart:0,booking:null};
+const dates=[['FRI','13'],['SAT','14'],['SUN','15'],['MON','16'],['TUE','17'],['WED','18']];
+const courts=[
+ {id:1,name:'Court 01',type:'Indoor · Hard Court',emoji:'🎾'},
+ {id:2,name:'Court 02',type:'Outdoor · Hard Court',emoji:'☀️'},
+ {id:3,name:'Court 03',type:'Indoor · Premium',emoji:'✨'}
+];
+const times=['17:00','18:00','19:00','20:00','21:00','22:00'];
+const products=[
+ {id:1,name:'CV Pro Tennis Ball',price:320,emoji:'🎾',desc:'ลูกเทนนิสสำหรับการซ้อมและเล่นจริง ให้ฟีลลูกสม่ำเสมอและควบคุมง่าย'},
+ {id:2,name:'CV Club Towel',price:390,emoji:'🧺',desc:'ผ้าเช็ดหน้าขนาดพอดีสำหรับนักเทนนิส เนื้อนุ่ม แห้งไว'},
+ {id:3,name:'Overgrip 3-Pack',price:290,emoji:'🎯',desc:'กริปซับเหงื่อสำหรับการเล่นต่อเนื่อง 3 ชิ้น'},
+ {id:4,name:'CV Tennis Cap',price:650,emoji:'🧢',desc:'หมวกทรง sport น้ำหนักเบา ใส่ซ้อมหรือใส่ everyday ก็ได้'}
+];
+function $(id){return document.getElementById(id)}
+function go(id){
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');
+ ['home','bookings','shop','profile'].forEach(x=>{let b=$('n-'+x);if(b)b.classList.toggle('active',id===x || (id==='product'&&x==='shop') || (id==='summary'&&x==='home'))});
+ if(id==='booking')renderBooking(); if(id==='bookings')renderBookings(); if(id==='shop')renderProducts(); if(id==='cart')renderCart();
+ window.scrollTo({top:0,behavior:'smooth'});
+}
+function selectCoaching(title,price){$('coachTitle').textContent=title;$('coachPrice').textContent=price;go('coachingDetail')}
+function joinEvent(name){toast(name+' — joined ✓')}
+function renderBooking(){
+ $('dates').innerHTML=dates.map((d,i)=>`<button class="date ${state.date===i?'sel':''}" onclick="state.date=${i};renderBooking()"><small>${d[0]}</small><strong>${d[1]}</strong></button>`).join('');
+ $('courts').innerHTML=courts.map(c=>`<button class="card court ${state.court===c.id?'selected':''}" onclick="state.court=${c.id};renderBooking()"><div class="courtpic">${c.emoji}</div><div style="text-align:left"><h3>${c.name}</h3><div class="mini">${c.type}</div><span class="tag">Available</span></div></button>`).join('');
+ $('times').innerHTML=times.map(t=>`<button class="time ${t==='18:00'?'off':''} ${state.time===t?'sel':''}" ${t==='18:00'?'disabled':''} onclick="state.time='${t}';renderBooking()">${t}</button>`).join('');
+}
+function continueBooking(){
+ const c=courts.find(x=>x.id===state.court),d=dates[state.date];
+ $('sumCourt').textContent=c.name;$('sumDate').textContent=`${d[0]} ${d[1]} Nov 2026`;$('sumTime').textContent=state.time+'–'+String(Number(state.time.slice(0,2))+1).padStart(2,'0')+':00';go('summary');
+}
+function confirmBooking(){
+ const c=courts.find(x=>x.id===state.court),d=dates[state.date];
+ state.booking={court:c.name,date:`${d[0]} ${d[1]} Nov 2026`,time:state.time,id:'CV'+Math.floor(100000+Math.random()*899999)};
+ $('confCourt').textContent=c.name;$('confDateTime').textContent=`${state.booking.date} · ${state.booking.time}`;$('confId').textContent=state.booking.id;go('confirmed');toast('Booking confirmed ✓');
+}
+function renderBookings(){
+ if(!state.booking){$('bookingList').innerHTML=`<div class="empty">ยังไม่มีการจองใหม่<br><button class="link smallgap" onclick="go('booking')">จองสนามแรกของคุณ →</button></div>`;return}
+ $('bookingList').innerHTML=`<div class="card"><div class="row"><span class="pill">CONFIRMED</span><b style="color:var(--green)">PAID</b></div><h2 style="margin-top:14px">${state.booking.court}</h2><p>${state.booking.date}<br>${state.booking.time}–${String(Number(state.booking.time.slice(0,2))+1).padStart(2,'0')}:00</p><div class="line row"><span class="mini">Booking ID</span><b>${state.booking.id}</b></div><button class="secondary" style="width:100%;margin-top:10px">View booking details</button></div>`;
+}
+function renderProducts(){
+ $('products').innerHTML=products.map(p=>`<button class="card" style="text-align:left" onclick="openProduct(${p.id})"><div class="prodimg">${p.emoji}</div><div style="margin-top:12px;font-weight:850">${p.name}</div><div class="price">฿${p.price.toLocaleString()}</div></button>`).join('');
+}
+function openProduct(id){state.product=products.find(p=>p.id===id);$('detailImg').textContent=state.product.emoji;$('detailName').textContent=state.product.name;$('detailDesc').textContent=state.product.desc;$('detailPrice').textContent='฿'+state.product.price.toLocaleString();go('product')}
+function addCart(){state.cart++;$('cartCount').textContent=state.cart;toast('เพิ่มลงตะกร้าแล้ว ✓');go('cart')}
+function renderCart(){
+ if(!state.product){$('cartBody').innerHTML='<div class="empty">ตะกร้ายังว่างอยู่</div>';return}
+ const p=state.product,sub=p.price*state.cart;
+ $('cartBody').innerHTML=`<div class="card"><div class="row"><div style="display:flex;gap:12px;align-items:center"><div style="font-size:42px">${p.emoji}</div><div><b>${p.name}</b><div class="mini">Qty ${state.cart}</div></div></div><b>฿${sub.toLocaleString()}</b></div></div><div class="summary smallgap"><div class="line"><span>Subtotal</span><b>฿${sub.toLocaleString()}</b></div><div class="line"><span>Shipping</span><b>฿60</b></div><div class="total row"><span>Total</span><span>฿${(sub+60).toLocaleString()}</span></div></div><div class="section"><button class="primary" onclick="checkout()">Checkout →</button></div>`;
+}
+function checkout(){let p=state.product,sub=p.price*state.cart;$('checkoutItem').textContent=`${p.name} × ${state.cart}`;$('checkoutTotal').textContent='฿'+(sub+60).toLocaleString();go('checkout')}
+function orderDone(){toast('Order placed ✓');state.cart=0;$('cartCount').textContent='0';go('shop')}
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1800)}
+renderBooking();renderProducts();
+</script>
+</body>
+</html>
