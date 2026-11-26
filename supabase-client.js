@@ -5,7 +5,7 @@ const BACKSPIN_SUPABASE_PUBLISHABLE_KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_v
 window.backspinDb=window.supabase.createClient(
   BACKSPIN_SUPABASE_URL,
   BACKSPIN_SUPABASE_PUBLISHABLE_KEY,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
 );
 
 window.backspinAuthState={event:null,session:null};
@@ -24,7 +24,10 @@ window.backspinDb.auth.onAuthStateChange((event,session)=>{
     hasSession:Boolean(session),
     userId:session?.user?.id||null
   });
-  if(session){
+  if(event==='INITIAL_SESSION'){
+    const waiters=window.backspinAuthWaiters.splice(0);
+    waiters.forEach(resolve=>resolve(session||null));
+  }else if(session){
     const waiters=window.backspinAuthWaiters.splice(0);
     waiters.forEach(resolve=>resolve(session));
   }
@@ -46,9 +49,9 @@ window.backspinData={
   },
 
   async waitForSession(timeoutMs=15000){
+    if(window.backspinAuthState.event==='INITIAL_SESSION') return window.backspinAuthState.session||null;
     const existing=await this.session();
     if(existing)return existing;
-    if(!(window.location.search.includes('code=')||window.location.hash.includes('access_token=')))return null;
     return new Promise(resolve=>{
       let done=false;
       const finish=session=>{
@@ -58,7 +61,9 @@ window.backspinData={
         window.backspinAuthWaiters=window.backspinAuthWaiters.filter(x=>x!==finish);
         resolve(session||null);
       };
-      const timer=setTimeout(()=>finish(null),timeoutMs);
+      const timer=setTimeout(async()=>{
+        try{finish(await this.session())}catch(_e){finish(null)}
+      },timeoutMs);
       window.backspinAuthWaiters.push(finish);
     });
   },
