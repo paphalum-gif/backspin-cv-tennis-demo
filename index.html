@@ -34,7 +34,22 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function go(id){$$('.screen').forEach(x=>x.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');window.scrollTo(0,0);if(id==='review')renderReview();if(id==='my-applications')renderApplications();if(id==='submitted')renderSubmitted()}
 function setLang(lang){document.documentElement.lang=lang;$$('.lang').forEach(b=>b.classList.toggle('active',b.dataset.lang===lang));const th={loginTitle:'เข้าสู่ระบบด้วย LINE',loginDesc:'ใช้บัญชี LINE เพื่อเข้าใช้งาน Backspin',continueLine:'ดำเนินการต่อด้วย LINE',loginNote:'เมื่อดำเนินการต่อ คุณยอมรับข้อกำหนดและนโยบายความเป็นส่วนตัวของ Backspin',signedIn:'เข้าสู่ระบบด้วย LINE แล้ว',checkingProfile:'กำลังตรวจสอบ Backspin Profile ของคุณ',createProfile:'สร้าง Backspin Profile',profileReuse:'กรอกข้อมูลผู้เล่นครั้งเดียวและใช้ซ้ำสำหรับทัวร์นาเมนต์ในอนาคต',lineConnected:'เชื่อมต่อบัญชี LINE แล้ว ข้อมูลโปรไฟล์แยกจากใบสมัครแต่ละทัวร์นาเมนต์',continueSkill:'ไปยังโปรไฟล์ทักษะ'};const en={loginTitle:'Log in with LINE',loginDesc:'Use your LINE account to access Backspin.',continueLine:'Continue with LINE',loginNote:"By continuing, you agree to Backspin's Terms and Privacy Policy.",signedIn:'Signed in with LINE',checkingProfile:'Authentication is complete. Backspin is checking your profile.',createProfile:'Create your Backspin Profile',profileReuse:'Complete your player details once. Your profile will be reused for future tournaments.',lineConnected:'LINE account connected. Your profile is separate from each tournament registration.',continueSkill:'Continue to Skill Profile'};$$('[data-i18n]').forEach(e=>e.textContent=(lang==='th'?th:en)[e.dataset.i18n]||e.textContent)}
 $$('.lang').forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
-async function lineLogin(){const b=$('#lineBtn');b.disabled=true;b.textContent='Opening LINE…';try{if(!window.backspinData?.signInWithLine)throw new Error('Supabase client failed to load');const result=await window.backspinData.signInWithLine();if(result?.url){window.location.assign(result.url);return}throw new Error('Supabase did not return an OAuth URL')}catch(e){console.error('LINE Login error',e);const redirectTo=encodeURIComponent(window.location.origin+'/');window.location.assign('https://ddnmrbkkrllmxsflkmam.supabase.co/auth/v1/authorize?provider=custom:line&redirect_to='+redirectTo);return}finally{if(!document.hidden){b.disabled=false;b.textContent='Continue with LINE'}}}
+async function lineLogin(){
+  const b=$('#lineBtn');
+  b.disabled=true;
+  b.textContent='Opening LINE…';
+  try{
+    if(!window.backspinData?.signInWithLine) throw new Error('Supabase client failed to load.');
+    const result=await window.backspinData.signInWithLine();
+    if(!result?.url) throw new Error('Supabase did not return the LINE authorization URL.');
+    window.location.assign(result.url);
+  }catch(e){
+    console.error('LINE Login error',e);
+    b.disabled=false;
+    b.textContent='Continue with LINE';
+    alert('LINE Login could not start. '+(e.message||e));
+  }
+}
 function field(section,label){const f=[...document.querySelectorAll(`#${section} .field`)].find(x=>x.querySelector('label')?.textContent.trim()===label);return f?.querySelector('input,select,textarea')||null}
 function val(section,label){return field(section,label)?.value?.trim()||''}
 function fillProfile(){const p=S.player;if(!p)return;const map={'Name–Surname *':p.name,'Phone *':p.phone,'Email *':p.email||S.session?.user?.email,'Nickname':p.nickname,'Occupation':p.occupation,'LINE ID':p.line_id,'Instagram ID':p.instagram_id,'Regular Tennis Court':p.regular_tennis_court,'Tennis Experience':p.tennis_experience,'Medical Condition(s)':p.medical_conditions,'Emergency Contact Name':p.emergency_contact_name,'Emergency Contact No.':p.emergency_contact_phone,'Date of Birth *':p.date_of_birth,'Gender *':p.gender};Object.entries(map).forEach(([k,v])=>{if(v!=null&&field('profile-create',k))field('profile-create',k).value=v})}

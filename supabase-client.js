@@ -23,11 +23,10 @@ window.backspinData = {
   },
 
   async signInWithLine() {
-    const redirectTo = window.location.origin + '/';
     const { data, error } = await window.backspinDb.auth.signInWithOAuth({
       provider: 'custom:line',
       options: {
-        redirectTo
+        scopes: 'openid profile email'
       }
     });
     if (error) throw error;
