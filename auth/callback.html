@@ -29,8 +29,9 @@ h1{margin:0 0 10px;font-size:26px}.muted{color:#68758a;line-height:1.5}.error{di
   const p=new URLSearchParams(location.search);
   const code=p.get('code');
   const flowId=p.get('sb_flow_id');
-  const existing=await supabase.auth.getSession();
-  if(existing.data?.session){location.replace('/');return}
+  // If a fresh OAuth code is present, ALWAYS exchange it first.
+  // Do not let an unrelated/stale session (for example an Admin session
+  // in the same browser) short-circuit the pending LINE login.
   if(p.get('error')){
     document.getElementById('title').textContent='Sign-in could not be completed';
     document.getElementById('status').textContent='We received an incomplete LINE callback. Please try again.';
