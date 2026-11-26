@@ -1,170 +1,18 @@
-// Backspin Supabase client — Tournament V1
-// Browser-safe publishable key only. Never put a Supabase secret/service-role key or LINE Channel Secret here.
-const BACKSPIN_SUPABASE_URL = 'https://ddnmrbkkrllmxsflkmam.supabase.co';
-const BACKSPIN_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_w0ECVY33KmSCev_0XHfA-A_vAxWHsjm';
-
-window.backspinDb = window.supabase.createClient(
-  BACKSPIN_SUPABASE_URL,
-  BACKSPIN_SUPABASE_PUBLISHABLE_KEY,
-  {
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true
-    }
-  }
-);
-
-window.backspinData = {
-  async session() {
-    const { data, error } = await window.backspinDb.auth.getSession();
-    if (error) throw error;
-    return data.session || null;
-  },
-
-  async signInWithLine() {
-    const { data, error } = await window.backspinDb.auth.signInWithOAuth({
-      provider: 'custom:line',
-      options: {
-        scopes: 'openid profile email'
-      }
-    });
-    if (error) throw error;
-    return data;
-  },
-
-  async signOut() {
-    const { error } = await window.backspinDb.auth.signOut();
-    if (error) throw error;
-  },
-
-  lineIdentity(session) {
-    const identities = session?.user?.identities || [];
-    const identity = identities.find(i => i.provider === 'line' || i.provider === 'custom:line');
-    const data = identity?.identity_data || {};
-    return {
-      lineId: data.sub || data.userId || session?.user?.user_metadata?.sub || null,
-      name: data.name || data.displayName || session?.user?.user_metadata?.name || session?.user?.user_metadata?.full_name || 'Backspin Player',
-      picture: data.picture || data.pictureUrl || session?.user?.user_metadata?.picture || session?.user?.user_metadata?.avatar_url || null,
-      email: data.email || session?.user?.email || null
-    };
-  },
-
-  async ensurePlayer(session) {
-    if (!session?.user?.id) throw new Error('No authenticated user');
-    const authUserId = session.user.id;
-    const line = this.lineIdentity(session);
-
-    const { data: existing, error: ee } = await window.backspinDb
-      .from('players')
-      .select('*')
-      .eq('auth_user_id', authUserId)
-      .maybeSingle();
-    if (ee) throw ee;
-    if (existing) return existing;
-
-    // If the same LINE subject was already linked to a Backspin profile, reuse it.
-    if (line.lineId) {
-      const { data: byLine, error: le } = await window.backspinDb
-        .from('players')
-        .select('*')
-        .eq('line_id', line.lineId)
-        .maybeSingle();
-      if (le) throw le;
-      if (byLine) {
-        const { data: linked, error: ue } = await window.backspinDb
-          .from('players')
-          .update({ auth_user_id: authUserId, email: byLine.email || line.email, updated_at: new Date().toISOString() })
-          .eq('player_id', byLine.player_id)
-          .select('*')
-          .single();
-        if (ue) throw ue;
-        return linked;
-      }
-    }
-
-    const { data, error } = await window.backspinDb
-      .from('players')
-      .insert({
-        auth_user_id: authUserId,
-        name: line.name,
-        email: line.email,
-        line_id: line.lineId,
-        profile_photo_path: null,
-        verification_status: 'Unverified'
-      })
-      .select('*')
-      .single();
-    if (error) throw error;
-    return data;
-  },
-
-  async loadTournament() {
-    const { data: tournament, error: te } = await window.backspinDb
-      .from('tournaments')
-      .select('*')
-      .eq('name', 'Backspin January Open')
-      .eq('status', 'Open')
-      .single();
-    if (te) throw te;
-
-    const { data: divisions, error: de } = await window.backspinDb
-      .from('divisions')
-      .select('*')
-      .eq('tournament_id', tournament.tournament_id)
-      .eq('is_open', true)
-      .order('sort_order');
-    if (de) throw de;
-
-    const { data: regs, error: re } = await window.backspinDb
-      .from('registrations')
-      .select('division_id, registration_status')
-      .eq('tournament_id', tournament.tournament_id)
-      .in('registration_status', ['SUBMITTED','PAYMENT_REQUIRED','PAYMENT_SUBMITTED','CONFIRMED']);
-    if (re) throw re;
-
-    const counts = {};
-    (regs || []).forEach(r => counts[r.division_id] = (counts[r.division_id] || 0) + 1);
-
-    return {
-      tournament,
-      divisions: (divisions || []).map(d => ({
-        ...d,
-        registration_count: counts[d.division_id] || 0
-      }))
-    };
-  },
-
-  async loadRegistrations(playerId) {
-    const { data, error } = await window.backspinDb
-      .from('registrations')
-      .select('*, divisions(name,level,fee), tournaments(name)')
-      .eq('main_player_id', playerId)
-      .order('submitted_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
-  },
-
-  async createRegistration({ tournamentId, divisionId, playerId, profileSnapshot, applicationSnapshot, eligibilityAnswers, externalHistorySnapshot, skillAssessment, status, paymentStatus }) {
-    const { data, error } = await window.backspinDb
-      .from('registrations')
-      .insert({
-        tournament_id: tournamentId,
-        division_id: divisionId,
-        main_player_id: playerId,
-        registration_status: status,
-        eligibility_result: 'YELLOW',
-        eligibility_reason: 'Initial registration validation',
-        payment_status: paymentStatus,
-        profile_snapshot: profileSnapshot || {},
-        application_snapshot: applicationSnapshot || {},
-        eligibility_answers: eligibilityAnswers || {},
-        external_history_snapshot: externalHistorySnapshot || [],
-        skill_assessment: skillAssessment || {}
-      })
-      .select('*, divisions(name,level,fee), tournaments(name)')
-      .single();
-    if (error) throw error;
-    return data;
-  }
+// Backspin Supabase client — Tournament V1 production bridge.
+const BACKSPIN_SUPABASE_URL='https://ddnmrbkkrllmxsflkmam.supabase.co';
+const BACKSPIN_SUPABASE_PUBLISHABLE_KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_vAxWHsjm';
+window.backspinDb=window.supabase.createClient(BACKSPIN_SUPABASE_URL,BACKSPIN_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce'}});
+window.backspinData={
+async session(){const {data,error}=await window.backspinDb.auth.getSession();if(error)throw error;return data.session||null},
+async signInWithLine(){const redirectTo=window.location.origin+window.location.pathname;const {data,error}=await window.backspinDb.auth.signInWithOAuth({provider:'custom:line',options:{scopes:'openid profile',redirectTo}});if(error)throw error;if(!data?.url)throw new Error('Supabase did not return the LINE authorization URL.');return data},
+async signOut(){const {error}=await window.backspinDb.auth.signOut();if(error)throw error},
+lineIdentity(session){const u=session?.user||{},ids=u.identities||[],i=ids.find(x=>x.provider==='line'||x.provider==='custom:line'),d=i?.identity_data||{},m=u.user_metadata||{};return{lineId:d.sub||d.userId||m.sub||null,name:d.name||d.displayName||m.name||m.display_name||m.full_name||'Backspin Player',picture:d.picture||d.pictureUrl||m.picture||m.avatar_url||null,email:d.email||u.email||m.email||null}},
+async ensurePlayer(session){if(!session?.user?.id)throw new Error('No authenticated user.');const authUserId=session.user.id,line=this.lineIdentity(session);const {data:existing,error:ee}=await window.backspinDb.from('players').select('*').eq('auth_user_id',authUserId).maybeSingle();if(ee)throw ee;if(existing)return existing;if(line.lineId){const {data:byLine,error:le}=await window.backspinDb.from('players').select('*').eq('line_id',line.lineId).maybeSingle();if(le)throw le;if(byLine){const {data:linked,error:ue}=await window.backspinDb.from('players').update({auth_user_id:authUserId,email:byLine.email||line.email||null,updated_at:new Date().toISOString()}).eq('player_id',byLine.player_id).select('*').single();if(ue)throw ue;return linked}}const {data,error}=await window.backspinDb.from('players').insert({auth_user_id:authUserId,name:line.name,email:line.email||null,line_id:line.lineId||null,profile_photo_path:null,verification_status:'Unverified'}).select('*').single();if(error)throw error;return data},
+async loadTournament(){const {data:tournament,error:te}=await window.backspinDb.from('tournaments').select('*').eq('status','Open').order('start_at',{ascending:true}).limit(1).maybeSingle();if(te)throw te;if(!tournament)throw new Error('No open tournament is available.');const {data:divisions,error:de}=await window.backspinDb.from('divisions').select('*').eq('tournament_id',tournament.tournament_id).order('sort_order');if(de)throw de;const {data:regs,error:re}=await window.backspinDb.from('registrations').select('division_id,registration_status').eq('tournament_id',tournament.tournament_id).in('registration_status',['SUBMITTED','PAYMENT_REQUIRED','PAYMENT_SUBMITTED','CONFIRMED']);if(re)throw re;const counts={};(regs||[]).forEach(r=>counts[r.division_id]=(counts[r.division_id]||0)+1);return{tournament,divisions:(divisions||[]).map(d=>({...d,registration_count:counts[d.division_id]||0}))}},
+async loadRegistrations(playerId){const {data,error}=await window.backspinDb.from('registrations').select('*, divisions(name,format,level,fee), tournaments(name)').eq('main_player_id',playerId).order('submitted_at',{ascending:false});if(error)throw error;return data||[]},
+async loadExternalHistory(playerId){const {data,error}=await window.backspinDb.from('external_tournament_history').select('*').eq('player_id',playerId).order('tournament_year',{ascending:false});if(error)throw error;return data||[]},
+async loadChampionHistory(playerId){const {data,error}=await window.backspinDb.from('champion_history').select('*, divisions(name,format,level)').eq('champion_player_id',playerId).order('recorded_at',{ascending:false});if(error)throw error;return data||[]},
+async createRegistration(p){const {data,error}=await window.backspinDb.from('registrations').insert({tournament_id:p.tournamentId,division_id:p.divisionId,main_player_id:p.playerId,registration_status:p.status,eligibility_result:p.eligibilityResult,eligibility_reason:p.eligibilityReason,payment_status:p.paymentStatus,profile_snapshot:p.profileSnapshot||{},application_snapshot:p.applicationSnapshot||{},eligibility_answers:p.eligibilityAnswers||{},external_history_snapshot:p.externalHistorySnapshot||[],skill_assessment:p.skillAssessment||{}}).select('*, divisions(name,format,level,fee), tournaments(name)').single();if(error)throw error;return data},
+async saveConsents(id,items){const rows=items.map(x=>({registration_id:id,consent_type:x.type,accepted:x.accepted,language:x.language,consent_version:x.version,accepted_at:new Date().toISOString()}));const {error}=await window.backspinDb.from('registration_consents').upsert(rows,{onConflict:'registration_id,consent_type'});if(error)throw error},
+async uploadPaymentSlip(id,file){const path=`${id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const up=await window.backspinDb.storage.from('payment-slips').upload(path,file,{upsert:false});if(up.error)throw up.error;const ins=await window.backspinDb.from('payment_submissions').insert({registration_id:id,slip_storage_path:path,payment_status:'SUBMITTED'}).select('*').single();if(ins.error)throw ins.error;const upd=await window.backspinDb.from('registrations').update({registration_status:'PAYMENT_SUBMITTED',payment_status:'SUBMITTED',updated_at:new Date().toISOString()}).eq('registration_id',id).select('*').single();if(upd.error)throw upd.error;return upd.data}
 };
