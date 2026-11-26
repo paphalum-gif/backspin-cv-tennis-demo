@@ -258,7 +258,7 @@ returns boolean
 language sql
 stable
 set search_path = public, auth, pg_temp
-as $
+as $$
   select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);
 $$;
 
