@@ -15,7 +15,7 @@ export default function LineLoginButton() {
       provider: "custom:line",
       options: {
         scopes: "openid profile",
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || window.location.origin}/auth/callback`,
       },
     });
     if (error) {
