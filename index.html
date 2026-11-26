@@ -26,7 +26,7 @@
 <section class="screen" id="confirmed"><div class="card narrow"><span class="badge green">CONFIRMED</span><h1>You're in.</h1><p class="muted">Your registration is complete.</p><div class="notice green">Payment verified and application confirmed by Admin.</div><div class="actions"><button class="btn primary" onclick="go('my-applications')">Back to My Applications</button></div></div></section>
 <section class="screen" id="history"><div class="top"><div><div class="eyebrow" style="color:var(--blue)">TOURNAMENT HISTORY</div><h1>My Tournament History</h1><p class="muted">Results and submitted application snapshots.</p></div></div><div class="card empty">No tournament history yet.</div></section>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase-client.js?v=final1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.2"></script><script src="./supabase-client.js?v=final1"></script>
 <script>
 const S={session:null,player:null,tournament:null,divisions:[],apps:[],selected:null,history:[],paymentIndex:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)], money=n=>`฿${Number(n||0).toLocaleString()}`;
