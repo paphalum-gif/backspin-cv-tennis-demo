@@ -20,33 +20,19 @@ h1{margin:0 0 10px;font-size:26px}.muted{color:#68758a;line-height:1.5}.error{di
 <div id="error" class="error"></div>
 <button id="retry" class="btn" onclick="location.href='/'">Return to Backspin</button>
 </div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const URL='https://ddnmrbkkrllmxsflkmam.supabase.co';
-const KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_vAxWHsjm';
-const db=supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
-(async()=>{
- try{
-   const params=new URLSearchParams(location.search);
-   const error=params.get('error');
-   const errorDescription=params.get('error_description');
-   if(error) throw new Error(errorDescription||error);
-   const code=params.get('code');
-   if(!code) throw new Error('Missing OAuth authorization code.');
-   const {error:exchangeError}=await db.auth.exchangeCodeForSession(code);
-   if(exchangeError) throw exchangeError;
-   const {data,error:sessionError}=await db.auth.getSession();
-   if(sessionError) throw sessionError;
-   if(!data.session) throw new Error('LINE sign-in completed but no Backspin session was created.');
-   document.getElementById('status').textContent='Signed in successfully. Redirecting to Backspin…';
-   history.replaceState({},'',location.pathname);
-   location.replace('/');
- }catch(e){
-   console.error('Backspin OAuth callback error',e);
-   document.getElementById('status').textContent='We could not complete your LINE sign-in.';
-   const box=document.getElementById('error');box.textContent=e.message||String(e);box.style.display='block';
-   document.getElementById('retry').style.display='block';
- }
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('error')){
+    location.replace('/?error='+encodeURIComponent(p.get('error'))+'&error_description='+encodeURIComponent(p.get('error_description')||''));
+    return;
+  }
+  if(p.get('code')){
+    const target='/?'+p.toString();
+    location.replace(target);
+    return;
+  }
+  location.replace('/');
 })();
 </script>
 </body>
