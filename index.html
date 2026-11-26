@@ -28,13 +28,15 @@ let dbReady=false;
 let currentSession=null;
 let currentPlayer=null;
 let currentTournament=null;
+let authListenerReady=false;
 async function initBackspin(){
   try{
-    currentSession=await window.backspinData.ensureDevSession();
+    currentSession=await window.backspinData.session();
+    if(!currentSession){render();return;}
     currentPlayer=await window.backspinData.ensurePlayer(currentSession);
     const loaded=await window.backspinData.loadTournament();
     currentTournament=loaded.tournament;
-    divisions=loaded.divisions.map(d=>[d.name,String(d.level),0,d.capacity,Number(d.fee),d.division_id,d.format]);
+    divisions=loaded.divisions.map(d=>[d.name,String(d.level),Number(d.registration_count||0),d.capacity,Number(d.fee),d.division_id,d.format]);
     const regs=await window.backspinData.loadRegistrations(currentPlayer.player_id);
     state.registrations=regs.map(r=>({
       id:r.registration_id,
@@ -46,6 +48,14 @@ async function initBackspin(){
       divisionId:r.division_id
     }));
     dbReady=true;
+    if(!authListenerReady){
+      authListenerReady=true;
+      window.backspinDb.auth.onAuthStateChange(async (_event, session) => {
+        currentSession=session||null;
+        if(!currentSession){currentPlayer=null;dbReady=false;render();return;}
+        await initBackspin();
+      });
+    }
     render();
   }catch(e){
     console.warn('Backspin DB init unavailable; demo mode retained.',e);
@@ -55,17 +65,21 @@ async function initBackspin(){
 function t(k){return I18N[lang][k]||k}function $(id){return document.getElementById(id)}function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function toast(m){$('toast').textContent=m;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),1800)}
 function setLang(x){lang=x;localStorage.setItem('backspin_lang',x);render()}
-function shell(active){return `<header class="header"><div class="shell header-in"><div class="brand"><img class="logo" src="${LOGO}" alt="Backspin"><span>BACKSPIN TENNIS CLUB</span></div><div class="header-actions"><div class="bell-wrap" id="bell"><button class="icon-btn" onclick="toggleBell()" aria-label="Notifications">♧<span class="unread">${state.notifications.filter(n=>n.unread).length}</span></button><div class="bell-menu"><div class="bell-head">${t('notifications')}</div>${state.notifications.slice(0,10).map(n=>`<div class="notice-row"><b>${esc(n.title)}</b><small>${esc(n.detail)}</small></div>`).join('')}</div></div><button class="lang ${lang==='th'?'active':''}" onclick="setLang('th')">TH</button><span style="opacity:.5">/</span><button class="lang ${lang==='en'?'active':''}" onclick="setLang('en')">EN</button></div></div></header>`}
+function shell(active){return `<header class="header"><div class="shell header-in"><div class="brand"><img class="logo" src="${LOGO}" alt="Backspin"><span>BACKSPIN TENNIS CLUB</span></div><div class="header-actions"><div class="bell-wrap" id="bell"><button class="icon-btn" onclick="toggleBell()" aria-label="Notifications">♧<span class="unread">${state.notifications.filter(n=>n.unread).length}</span></button><div class="bell-menu"><div class="bell-head">${t('notifications')}</div>${state.notifications.slice(0,10).map(n=>`<div class="notice-row"><b>${esc(n.title)}</b><small>${esc(n.detail)}</small></div>`).join('')}</div></div><button class="lang ${lang==='th'?'active':''}" onclick="setLang('th')">TH</button><span style="opacity:.5">/</span><button class="lang ${lang==='en'?'active':''}" onclick="setLang('en')">EN</button><button class="btn secondary" onclick="logout()" style="padding:7px 10px;font-size:10px">LINE ↗</button></div></div></header>`}
 function toggleBell(){const b=$('bell');b.classList.toggle('open');if(b.classList.contains('open'))state.notifications.forEach(n=>n.unread=false)}
 function playerNav(active){return `<nav class="bottom-nav"><button class="${active==='register'?'active':''}" onclick="go('register')"><span>＋</span>${t('register')}</button><button class="${active==='mine'?'active':''}" onclick="go('mine')"><span>▣</span>${t('mine')}</button><button class="${active==='profile'?'active':''}" onclick="go('profile')"><span>○</span>${t('profile')}</button></nav>`}
 function render(){document.documentElement.lang=lang;const path=location.pathname; if(path==='/admin'||path.startsWith('/admin/')){renderAdmin();return}renderPlayer()}
 function go(page){state.page=page;state.step=1;history.pushState({},'',page==='register'?'/':`/${page}`);render()}
 window.onpopstate=()=>render();
 function renderPlayer(){
+ if(!currentSession)return loginPage();
  let body='';
  if(state.page==='register')body=registerPage();else if(state.page==='mine')body=minePage();else body=profilePage();
  $('root').innerHTML=shell(state.page)+`<main class="shell main">${body}</main>`+playerNav(state.page);if(state.page==='register')renderWizard();
 }
+function loginPage(){return `<section class="view active"><div class="hero" style="max-width:620px;margin:60px auto 22px"><div class="eyebrow" style="color:#DCE9FA">BACKSPIN TENNIS</div><h1>Sign in with LINE</h1><p>Use your LINE account to access your Backspin profile and tournament registrations.</p><button class="btn full" style="background:#06C755;color:#fff;margin-top:12px" onclick="loginWithLine()">Continue with LINE</button><div class="muted" style="color:#DCE9FA;margin-top:12px">Secure authentication is handled by LINE.</div></div></section>`}
+async function loginWithLine(){try{await window.backspinData.signInWithLine()}catch(e){console.error(e);toast('LINE Login is not configured yet')}}
+async function logout(){try{await window.backspinData.signOut()}catch(e){console.error(e)}render()}
 function registerPage(){return `<section class="view active"><div class="hero"><div class="eyebrow" style="color:#DCE9FA">BACKSPIN TENNIS TOURNAMENT</div><h1>${t('tournament')}</h1><p>${t('date')} · ${t('venue')}</p><div class="hero-meta"><span class="meta-chip">Registration Open</span><span class="meta-chip">Thai / English</span><span class="meta-chip">Asia/Bangkok</span></div></div><div class="section"><div class="section-title"><div><h2>${t('choose')}</h2><div class="muted">Fee and capacity are configured per Category + Level.</div></div></div><div class="grid">${divisions.map((d,i)=>divisionCard(d,i)).join('')}</div></div></section>`}
 function divisionCard(d,i){const full=d[2]>=d[3];const eligible=!(d[0]==='Men Singles'&&d[1]==='3.5');return `<div class="card"><div class="division"><div><h3>${d[0]} · ${d[1]}</h3><div class="count">${d[2]} / ${d[3]} · ฿${d[4].toLocaleString()}</div><div style="margin-top:8px">${eligible?'<span class="status s-confirmed">'+t('eligible')+'</span>':'<span class="status s-cancelled">'+t('notEligible')+'</span>'}</div></div><div class="action">${full?`<button class="btn secondary full" onclick="startRegister(${i},true)">${t('waiting')}</button>`:`<button class="btn primary full" ${eligible?'':'disabled'} onclick="startRegister(${i},false)">${t('register')}</button>`}</div></div></div>`}
 function startRegister(i,waiting){const d=divisions[i];state.category=d[0];state.level=d[1];state.waiting=waiting;state.step=1;state.slip=null;state.partner={name:'',phone:'',email:''};renderWizardPage();}
@@ -106,7 +120,7 @@ async function submitRegistration(){
   toast('Registration submitted');go('mine');
 }
 function minePage(){return `<section class="view active"><div class="eyebrow">MY REGISTRATIONS</div><h1>${t('mine')}</h1><div class="grid">${state.registrations.map(r=>regCard(r)).join('')}</div></section>`}
-function regCard(r){let cls=r.status==='Confirmed'?'s-confirmed':r.status==='Waiting List'?'s-waiting':r.status==='Cancelled'?'s-cancelled':'s-pending';return `<div class="card"><div class="division"><div><div class="muted">${esc(r.id)}</div><h3 style="margin:6px 0">${esc(r.category)} · ${esc(r.level)}</h3></div><span class="status ${cls}">${esc(r.status)}</span></div><div class="line"><span>Payment</span><b>${esc(r.payment)}</b></div><div class="line"><span>Registered</span><b>${esc(r.created)}</b></div><div class="section"><div class="timeline"><div class="event"><b>Registration Submitted</b><small>${esc(r.created)}</small></div>${r.status==='Confirmed'?'<div class="event"><b>Confirmed</b><small>Approval timestamp</small></div>':r.status==='Waiting List'?'<div class="event"><b>Waiting List</b><small>FCFS queue · offer rules apply</small></div>':'<div class="event"><b>Pending Payment Verification</b><small>Admin will review your latest slip</small></div>'}</div></div>${r.status==='Pending Payment Verification'?'<button class="btn danger full" onclick="toast(\'Player can self-cancel only while Pending Payment Verification\')">Cancel registration</button>':''}</div>`}
+function regCard(r){let cls=r.status==='Confirmed'?'s-confirmed':r.status==='Waiting List'?'s-waiting':r.status==='Cancelled'?'s-cancelled':'s-pending';return `<div class="card"><div class="division"><div><div class="muted">${esc(r.id)}</div><h3 style="margin:6px 0">${esc(r.category)} · ${esc(r.level)}</h3></div><span class="status ${cls}">${esc(r.status)}</span></div><div class="line"><span>Payment</span><b>${esc(r.payment)}</b></div><div class="line"><span>Registered</span><b>${esc(r.created)}</b></div><div class="section"><div class="timeline"><div class="event"><b>Registration Submitted</b><small>${esc(r.created)}</small></div>${r.status==='Confirmed'?'<div class="event"><b>Confirmed</b><small>Approval timestamp</small></div>':r.status==='Waiting List'?'<div class="event"><b>Waiting List</b><small>FCFS queue · offer rules apply</small></div>':'<div class="event"><b>Pending Payment Verification</b><small>Admin will review your latest slip</small></div>'}</div></div>${''}</div>`}
 function profilePage(){return `<section class="view active"><div class="eyebrow">PROFILE</div><h1>${t('profileTitle')}</h1><div class="card"><div class="profile-head"><div class="avatar">PL</div><div><h2 style="margin:0">Paphawee Lumlert</h2><div class="muted">Verified · LINE linked</div></div></div><div class="section"><div class="line"><span>Name</span><b>Paphawee Lumlert</b></div><div class="line"><span>Phone</span><b>08X-XXX-XXXX</b></div><div class="line"><span>Email</span><b>player@example.com</b></div><div class="line"><span>LINE</span><b>Connected</b></div></div></div><div class="section"><div class="section-title"><h2>Champion History</h2></div>${state.champions.map(c=>`<div class="card" style="margin-bottom:10px"><b>${esc(c.name)}</b><div class="muted">${esc(c.t)} · ${esc(c.c)} · ${esc(c.l)}</div></div>`).join('')}</div><div class="section"><div class="card"><h3>Current Eligibility</h3><div class="line"><span>Men Singles · 3.5</span><span class="status s-cancelled">Restricted</span></div><div class="muted">Reason: Previous Champion · Higher levels remain allowed.</div></div></div></section>`}
 function adminHeader(){return `<header class="header"><div class="shell header-in"><div class="brand"><img class="logo" src="${LOGO}" alt="Backspin"><span>BACKSPIN ADMIN</span></div><div class="header-actions"><span class="muted" style="color:#fff">Admin: Jane</span><button class="btn secondary" onclick="location.href='/'">Player</button></div></div></header>`}
 function renderAdmin(){if(!state.adminLogged){$('root').innerHTML=adminLoginPage();return}$('root').innerHTML=adminHeader()+`<div class="admin-shell"><aside class="admin-side">${adminNav()}</aside><main class="admin-main">${adminContent()}</main></div>`}
