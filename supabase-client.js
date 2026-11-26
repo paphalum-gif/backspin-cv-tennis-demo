@@ -5,10 +5,11 @@ const BACKSPIN_SUPABASE_PUBLISHABLE_KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_v
 window.backspinDb=window.supabase.createClient(
   BACKSPIN_SUPABASE_URL,
   BACKSPIN_SUPABASE_PUBLISHABLE_KEY,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
 );
 
 window.backspinAuthState={event:null,session:null};
+window.backspinOAuthCallbackInProgress=new URL(location.href).searchParams.has('code');
 window.backspinAuthWaiters=[];
 
 function backspinAuthDebug(stage,payload={}){
@@ -79,6 +80,27 @@ window.backspinData={
     if(!data?.session)throw new Error('LINE sign-in completed but no Backspin session was created.');
     backspinAuthDebug('PKCE_EXCHANGE_OK',{userId:data.session.user?.id||null});
     return data.session;
+  },
+
+  async processOAuthCallback(){
+    const url=new URL(window.location.href);
+    const code=url.searchParams.get('code');
+    const flowId=url.searchParams.get('flowId')||url.searchParams.get('flow_id')||null;
+    const oauthError=url.searchParams.get('error');
+    if(oauthError)throw new Error(url.searchParams.get('error_description')||oauthError);
+    if(!code)return null;
+    if(window.backspinOAuthCallbackSession)return window.backspinOAuthCallbackSession;
+    window.backspinOAuthCallbackInProgress=true;
+    backspinAuthDebug('CALLBACK_ROOT_START',{hasCode:true,hasFlowId:Boolean(flowId)});
+    try{
+      const session=await this.completeOAuthCallback(code,flowId);
+      window.backspinOAuthCallbackSession=session;
+      backspinAuthDebug('CALLBACK_ROOT_SESSION_OK',{userId:session.user?.id||null});
+      window.history.replaceState({},document.title,url.origin+url.pathname+url.hash);
+      return session;
+    }finally{
+      window.backspinOAuthCallbackInProgress=false;
+    }
   },
 
   async signInWithLine(){
