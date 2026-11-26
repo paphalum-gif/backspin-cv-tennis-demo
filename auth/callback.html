@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Backspin · Signing in</title>
+<style>
+html,body{margin:0;min-height:100%;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f6f8fb;color:#14213d}
+.wrap{min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box}
+.card{width:min(460px,100%);background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:40px 32px;text-align:center;box-shadow:0 12px 40px rgba(20,33,61,.08)}
+.logo{width:64px;height:64px;border-radius:16px;background:#174ea6;display:grid;place-items:center;margin:0 auto 16px;color:#fff;font-size:30px;font-weight:800}
+h1{margin:0 0 10px;font-size:26px}.muted{color:#68758a;line-height:1.5}.error{display:none;margin-top:20px;padding:14px;border-radius:10px;background:#fff0f0;color:#b42318;text-align:left;font-size:14px}.btn{display:none;margin-top:18px;width:100%;padding:12px 16px;border:0;border-radius:10px;background:#174ea6;color:#fff;font-weight:700;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+<div class="logo">B</div>
+<h1>Signing you in</h1>
+<p id="status" class="muted">Completing your LINE sign-in securely…</p>
+<div id="error" class="error"></div>
+<button id="retry" class="btn" onclick="location.href='/'">Return to Backspin</button>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const URL='https://ddnmrbkkrllmxsflkmam.supabase.co';
+const KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_vAxWHsjm';
+const db=supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+(async()=>{
+ try{
+   const params=new URLSearchParams(location.search);
+   const error=params.get('error');
+   const errorDescription=params.get('error_description');
+   if(error) throw new Error(errorDescription||error);
+   const code=params.get('code');
+   if(!code) throw new Error('Missing OAuth authorization code.');
+   const {error:exchangeError}=await db.auth.exchangeCodeForSession(code);
+   if(exchangeError) throw exchangeError;
+   const {data,error:sessionError}=await db.auth.getSession();
+   if(sessionError) throw sessionError;
+   if(!data.session) throw new Error('LINE sign-in completed but no Backspin session was created.');
+   document.getElementById('status').textContent='Signed in successfully. Redirecting to Backspin…';
+   history.replaceState({},'',location.pathname);
+   location.replace('/');
+ }catch(e){
+   console.error('Backspin OAuth callback error',e);
+   document.getElementById('status').textContent='We could not complete your LINE sign-in.';
+   const box=document.getElementById('error');box.textContent=e.message||String(e);box.style.display='block';
+   document.getElementById('retry').style.display='block';
+ }
+})();
+</script>
+</body>
+</html>
