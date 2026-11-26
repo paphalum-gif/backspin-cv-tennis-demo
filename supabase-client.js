@@ -37,7 +37,14 @@ window.backspinData = {
       .eq('is_open', true)
       .order('sort_order');
     if (de) throw de;
-    return { tournament, divisions: divisions || [] };
+    const { data: regs, error: re } = await window.backspinDb
+      .from('registrations')
+      .select('division_id')
+      .eq('tournament_id', tournament.tournament_id);
+    if (re) throw re;
+    const counts = {};
+    (regs || []).forEach(r => counts[r.division_id] = (counts[r.division_id] || 0) + 1);
+    return { tournament, divisions: (divisions || []).map(d => ({...d, registration_count: counts[d.division_id] || 0})) };
   },
   async ensurePlayer(session) {
     const authUserId = session.user.id;
