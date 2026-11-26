@@ -5,5 +5,10 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
 # Trigger Netlify branch deploy after environment configuration update.
 # deploy trigger 2026-11-26-02
