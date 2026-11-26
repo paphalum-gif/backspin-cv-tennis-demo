@@ -83,7 +83,7 @@ window.backspinData={
 
   async signInWithLine(){
     backspinAuthDebug('LINE_LOGIN_START');
-    const redirectTo=window.location.origin+'/auth/callback';
+    const redirectTo=window.location.origin+'/';
     const {data,error}=await window.backspinDb.auth.signInWithOAuth({
       provider:'custom:line',
       options:{scopes:'openid profile',redirectTo}
