@@ -20,6 +20,7 @@ create table if not exists players (
   instagram_id text,
   regular_tennis_court text,
   tennis_experience_years numeric(4,1),
+  skill_profile jsonb not null default '{}'::jsonb,
   profile_photo_path text,
   verification_status text not null default 'Unverified'
     check (verification_status in ('Verified','Unverified')),
