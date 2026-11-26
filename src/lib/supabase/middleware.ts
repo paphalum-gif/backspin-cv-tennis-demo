@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+const PUBLIC_PATHS = ["/login", "/auth", "/admin/login"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,9 +33,18 @@ export async function updateSession(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PATHS.some((p) => path === p || path.startsWith(p + "/"));
 
+  const isAdminPath = path === "/admin" || path.startsWith("/admin/");
+
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = isAdminPath ? "/admin/login" : "/login";
+    url.search = "";
+    return NextResponse.redirect(url);
+  }
+
+  if (isAdminPath && !isPublic && user?.app_metadata?.role !== "admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
     url.search = "";
     return NextResponse.redirect(url);
   }
