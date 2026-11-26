@@ -5,7 +5,7 @@ const BACKSPIN_SUPABASE_PUBLISHABLE_KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_v
 window.backspinDb=window.supabase.createClient(
   BACKSPIN_SUPABASE_URL,
   BACKSPIN_SUPABASE_PUBLISHABLE_KEY,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
 );
 
 window.backspinAuthState={event:null,session:null};
@@ -83,7 +83,7 @@ window.backspinData={
 
   async signInWithLine(){
     backspinAuthDebug('LINE_LOGIN_START');
-    const redirectTo=window.location.origin+'/auth/callback';
+    const redirectTo=window.location.origin+'/';
     const {data,error}=await window.backspinDb.auth.signInWithOAuth({
       provider:'custom:line',
       options:{scopes:'openid profile',redirectTo}
