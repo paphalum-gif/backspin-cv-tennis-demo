@@ -4,3 +4,5 @@
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Trigger Netlify branch deploy after environment configuration update.
