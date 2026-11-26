@@ -5,7 +5,7 @@ const BACKSPIN_SUPABASE_PUBLISHABLE_KEY='sb_publishable_w0ECVY33KmSCev_0XHfA-A_v
 window.backspinDb=window.supabase.createClient(
   BACKSPIN_SUPABASE_URL,
   BACKSPIN_SUPABASE_PUBLISHABLE_KEY,
-  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce',experimental:{appendPkceFlowIdToRedirects:true}}}
+  {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce'}}
 );
 
 window.backspinAuthState={event:null,session:null};
@@ -69,10 +69,10 @@ window.backspinData={
     });
   },
 
-  async completeOAuthCallback(code,flowId){
+  async completeOAuthCallback(code){
     if(!code)throw new Error('Missing LINE authorization code.');
-    backspinAuthDebug('PKCE_EXCHANGE_START',{hasCode:Boolean(code),hasFlowId:Boolean(flowId)});
-    const {data,error}=await window.backspinDb.auth.exchangeCodeForSession(code,flowId?{flowId}:undefined);
+    backspinAuthDebug('PKCE_EXCHANGE_START',{hasCode:Boolean(code)});
+    const {data,error}=await window.backspinDb.auth.exchangeCodeForSession(code);
     if(error){
       backspinAuthDebug('PKCE_EXCHANGE_ERROR',{message:error.message});
       throw error;
@@ -85,21 +85,38 @@ window.backspinData={
   async processOAuthCallback(){
     const url=new URL(window.location.href);
     const code=url.searchParams.get('code');
-    const flowId=url.searchParams.get('flowId')||url.searchParams.get('flow_id')||null;
     const oauthError=url.searchParams.get('error');
     if(oauthError)throw new Error(url.searchParams.get('error_description')||oauthError);
     if(!code)return null;
     if(window.backspinOAuthCallbackSession)return window.backspinOAuthCallbackSession;
+    if(window.backspinOAuthCallbackPromise)return window.backspinOAuthCallbackPromise;
+
     window.backspinOAuthCallbackInProgress=true;
-    backspinAuthDebug('CALLBACK_ROOT_START',{hasCode:true,hasFlowId:Boolean(flowId)});
-    try{
-      const session=await this.completeOAuthCallback(code,flowId);
+    window.backspinOAuthCallbackPromise=(async()=>{
+      backspinAuthDebug('CALLBACK_ROOT_START',{hasCode:true});
+
+      // Keep the authorization code in memory only. Do not allow another
+      // boot pass/navigation to attempt a second exchange of the single-use code.
+      const session=await this.completeOAuthCallback(code);
+
       window.backspinOAuthCallbackSession=session;
       backspinAuthDebug('CALLBACK_ROOT_SESSION_OK',{userId:session.user?.id||null});
-      window.history.replaceState({},document.title,url.origin+url.pathname+url.hash);
+
+      // Remove all OAuth parameters before continuing into the app.
+      // replaceState does not reload the page, so the freshly established
+      // Supabase session remains available to the same browser context.
+      const cleanUrl=url.origin+url.pathname+url.hash;
+      window.history.replaceState({},document.title,cleanUrl);
+      backspinAuthDebug('CALLBACK_ROOT_CLEANED');
+
       return session;
+    })();
+
+    try{
+      return await window.backspinOAuthCallbackPromise;
     }finally{
       window.backspinOAuthCallbackInProgress=false;
+      window.backspinOAuthCallbackPromise=null;
     }
   },
 
