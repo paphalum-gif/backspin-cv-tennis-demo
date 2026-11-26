@@ -1,10 +1,11 @@
+import PlayerShell from "@/components/PlayerShell";
 import { requirePlayer } from "@/lib/current-player";
 import ProfileForm from "./ProfileForm";
 
 export default async function ProfilePage() {
   const { user, player } = await requirePlayer();
   return (
-    <main className="page">
+    <PlayerShell>
       <div className="eyebrow">SET UP YOUR PROFILE · 1/2</div>
       <h1>Create your Backspin Profile</h1>
       <p className="muted">
@@ -16,6 +17,6 @@ export default async function ProfilePage() {
         </div>
         <ProfileForm player={player} fallbackEmail={user.email ?? null} />
       </section>
-    </main>
+    </PlayerShell>
   );
 }

@@ -1,3 +1,4 @@
+import PlayerShell from "@/components/PlayerShell";
 import { redirect } from "next/navigation";
 import { requirePlayer } from "@/lib/current-player";
 import { isProfileComplete } from "@/lib/players";
@@ -7,7 +8,7 @@ export default async function SkillPage() {
   const { player } = await requirePlayer();
   if (!isProfileComplete(player)) redirect("/profile");
   return (
-    <main className="page">
+    <PlayerShell>
       <div className="eyebrow">SET UP YOUR PROFILE · 2/2</div>
       <h1>Your Skill Profile</h1>
       <p className="muted">
@@ -19,6 +20,6 @@ export default async function SkillPage() {
           saved={(player.skill_profile as Record<string, string> | null) ?? {}}
         />
       </section>
-    </main>
+    </PlayerShell>
   );
 }
