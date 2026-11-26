@@ -256,7 +256,8 @@ create or replace function public.is_admin()
 returns boolean
 language sql
 stable
-as $$
+set search_path = public, auth, pg_temp
+as $
   select coalesce((auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false);
 $$;
 
