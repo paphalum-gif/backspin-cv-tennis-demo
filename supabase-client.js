@@ -10,7 +10,7 @@ window.backspinDb = window.supabase.createClient(
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true
+      detectSessionInUrl: false
     }
   }
 );
@@ -23,7 +23,7 @@ window.backspinData = {
   },
 
   async signInWithLine() {
-    const redirectTo = window.location.origin + '/';
+    const redirectTo = window.location.origin + '/auth/callback';
     const { data, error } = await window.backspinDb.auth.signInWithOAuth({
       provider: 'custom:line',
       options: {
