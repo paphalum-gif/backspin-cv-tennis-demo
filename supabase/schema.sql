@@ -113,9 +113,9 @@ create table if not exists registrations (
   unique(tournament_id, division_id, main_player_id)
 );
 
-create index if not exists idx_registrations_tournament on registrations(tournament_id, created_at desc);
+create index if not exists idx_registrations_tournament on registrations(tournament_id, submitted_at desc);
 create index if not exists idx_registrations_division on registrations(division_id, registration_status);
-create index if not exists idx_registrations_player on registrations(main_player_id, created_at desc);
+create index if not exists idx_registrations_player on registrations(main_player_id, submitted_at desc);
 
 create table if not exists registration_partners (
   registration_partner_id uuid primary key default gen_random_uuid(),
