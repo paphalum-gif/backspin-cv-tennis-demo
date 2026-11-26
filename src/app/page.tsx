@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ensurePlayer, isProfileComplete } from "@/lib/players";
+import { ensurePlayer, isProfileComplete, type Player } from "@/lib/players";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -9,7 +10,7 @@ export default async function Home() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  let player;
+  let player: Player;
   try {
     player = await ensurePlayer(supabase, user);
   } catch (e) {
@@ -26,16 +27,17 @@ export default async function Home() {
     );
   }
 
+  if (!isProfileComplete(player)) redirect("/profile");
+
   return (
     <main className="wrap">
       <section className="card narrow">
         <div className="eyebrow">BACKSPIN</div>
         <h1>Hi, {player.name}</h1>
-        <p className="muted">
-          {isProfileComplete(player)
-            ? "Your profile is complete."
-            : "Please complete your profile before registering."}
-        </p>
+        <p className="muted">Your profile is complete. Tournaments are coming next.</p>
+        <Link className="btn secondary" href="/profile">
+          Edit profile
+        </Link>
         <form action="/auth/signout" method="post">
           <button className="btn secondary" type="submit">
             Sign out
